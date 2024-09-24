@@ -66,7 +66,7 @@ def add_product_to_cart(user_id, product_id):
     cart_details = request.get_json()
     quantity = cart_details.get("quantity")
 
-    product_response = requests.get(f"{PRODUCT_SERVICE_URL}/{product_id}")
+    product_response = requests.get(f"{PRODUCT_SERVICE_URL}/{product_id}?")
 
     if product_response.status_code == 200:
         product_data = product_response.json()
@@ -96,7 +96,7 @@ def remove_product_from_cart(user_id, product_id):
     quantity = cart_details.get("quantity")
 
     user_cart = next((u for u in user_carts if u['user_id'] == user_id), None)
-    product_response = requests.get(f"{PRODUCT_SERVICE_URL}/{product_id}")
+    product_response = requests.get(f"{PRODUCT_SERVICE_URL}/{product_id}?")
 
     if product_response.status_code == 200:
         product_data = product_response.json()
