@@ -35,7 +35,7 @@ def get_cart_by_user_id(user_id):
 
     for product in cart:
         product_id = product["id"]
-        product_response = requests.get(f"{PRODUCT_SERVICE_URL}/{product_id}")
+        product_response = requests.get(f"{PRODUCT_SERVICE_URL}/{product_id}?")
 
         if product_response.status_code == 200:
             product_data = product_response.json()
