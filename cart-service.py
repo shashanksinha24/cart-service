@@ -21,7 +21,7 @@ user_carts = [
     }
 ]
 
-PRODUCT_SERVICE_URL = "product-service-ckui.onrender.com/products"
+PRODUCT_SERVICE_URL = "https://product-service-ckui.onrender.com/products"
 
 @app.route("/carts/<int:user_id>", methods=['GET'])
 def get_cart_by_user_id(user_id):
