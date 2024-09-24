@@ -21,7 +21,7 @@ user_carts = [
     }
 ]
 
-PRODUCT_SERVICE_URL = "https://product-service-ckui.onrender.com/products"
+PRODUCT_SERVICE_URL = "https://product-service-ckui.onrender.com/products/products"
 
 @app.route("/carts/<int:user_id>", methods=['GET'])
 def get_cart_by_user_id(user_id):
@@ -74,15 +74,15 @@ def add_product_to_cart(user_id, product_id):
         user_cart = next((u for u in user_carts if u['user_id'] == user_id), None)
 
         if user_cart:
-            products = next((u['products'] for u in user_carts if u['user_id'] == user_id), None)
+            products = user_cart["products"]
 
-            if products:
-                for p in products:
-                    if p["id"] == product_id:
-                        p["quantity"] += quantity
-                        return jsonify({"message": "Product quantity has been updated"}), 201
-            else:
-                user_carts["products"].append({"id": product_id, "quantity": quantity})
+            for p in products:
+                if p["id"] == product_id:
+                    p["quantity"] += quantity
+                    return jsonify({"message": "Product quantity has been updated"}), 201
+
+            products.append({"id": product_id, "quantity": quantity})
+            return jsonify({"message": "Product added"}), 201
         else:
             user_carts.append({"user_id": user_id, "products": [{"id": product_id, "quantity": quantity}]})
             return jsonify({"message": "Product has been added to the cart"}), 201
