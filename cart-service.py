@@ -68,55 +68,42 @@ def add_product_to_cart(user_id, product_id):
 
     product_response = requests.get(f"{PRODUCT_SERVICE_URL}/{product_id}?")
 
-    if product_response.status_code != 200:
-        return jsonify({"message": "Product not found"}), 404
+    if product_response.status_code == 200:
+        product_data = product_response.json()
 
-    product_data = product_response.json()
+        user_cart = next((u for u in user_carts if u['user_id'] == user_id), None)
+        
+        if user_cart:
+            products = user_cart["products"]
 
-    if product_data["quantity"] < quantity:
-        return jsonify({"message": "You requested more than what is in stock"}), 400
+            for p in products:
+                if p["id"] == product_id and product_data["quantity"] >= quantity:
+                    p["quantity"] += quantity
+                    return jsonify({"message": "Product quantity has been updated"}), 201
+                elif product_data["quantity"] < quantity:
+                    return jsonify({"message": "You requested more than what is in stock"}), 404
+            request_data = {
+                "flag": "add",
+                "id": product_id,
+                "quantity": quantity
+            }
 
-    user_cart = next((u for u in user_carts if u['user_id'] == user_id), None)
-    
-    if user_cart:
-        for p in user_cart["products"]:
-            if p["id"] == product_id:
-                p["quantity"] += quantity
+            requests.post(f"{PRODUCT_SERVICE_URL}", json=request_data)
+            products.append({"id": product_id, "quantity": quantity})
+            return jsonify({"message": "Product added"}), 201
+        else:
+            if product_data["quantity"] >= quantity:
+                user_carts.append({"user_id": user_id, "products": [{"id": product_id, "quantity": quantity}]})
                 request_data = {
                     "flag": "add",
                     "id": product_id,
                     "quantity": quantity
                 }
-                requests.post(f"{PRODUCT_SERVICE_URL}?", json=request_data)
-                return jsonify({"message": "Product quantity has been updated"}), 200
-        
-        request_data = {
-            "flag": "add",
-            "id": product_id,
-            "quantity": quantity
-        }
-        requests.post(f"{PRODUCT_SERVICE_URL}?", json=request_data)
-        user_cart["products"].append({"id": product_id, "quantity": quantity})
+
+                requests.post(f"{PRODUCT_SERVICE_URL}", json=request_data)
+                return jsonify({"message": "Product has been added to the cart"}), 201
     else:
-        request_data = {
-            "flag": "add",
-            "id": product_id,
-            "quantity": quantity
-        }
-        requests.post(f"{PRODUCT_SERVICE_URL}?", json=request_data)
-        user_carts.append({
-            "user_id": user_id,
-            "products": [{"id": product_id, "quantity": quantity}]
-        })
-
-    request_data = {
-        "flag": "add",
-        "id": product_id,
-        "quantity": quantity
-    }
-    requests.post(f"{PRODUCT_SERVICE_URL}?", json=request_data)
-    return jsonify({"message": "Product has been added to the cart"}), 201
-
+        return jsonify({"message": "Product not found"}), 404
 
 
 @app.route("/carts/<int:user_id>/remove/<int:product_id>", methods=['POST'])
@@ -127,33 +114,32 @@ def remove_product_from_cart(user_id, product_id):
     user_cart = next((u for u in user_carts if u['user_id'] == user_id), None)
     product_response = requests.get(f"{PRODUCT_SERVICE_URL}/{product_id}?")
 
-    if product_response.status_code != 200:
-        return jsonify({"message": "Product not found"}), 404
+    if product_response.status_code == 200:
         product_data = product_response.json()
 
-    if user_cart:
-        products = next((u['products'] for u in user_carts if u['user_id'] == user_id), None)
+        if user_cart:
+            products = next((u['products'] for u in user_carts if u['user_id'] == user_id), None)
 
-        if products:
-            request_data = {
-                "flag": "remove",
-                "id": product_id,
-                "quantity": quantity
-            }
-            requests.post(f"{PRODUCT_SERVICE_URL}?", json=request_data)
+            if products:
+                request_data = {
+                    "flag": "remove",
+                    "id": product_id,
+                    "quantity": quantity
+                }
+                requests.post(f"{PRODUCT_SERVICE_URL}", json=request_data)
 
-            for p in products:
-                if p["id"] == product_id and product_data["quantity"] >= quantity:
-                    if p["quantity"] > quantity:
-                        p["quantity"] -= quantity
-                        return jsonify({"message": "Product quantity has been updated"}), 201
-                    else:
-                        products.remove(p)
-                        return jsonify({"message": "Product has been removed from the cart"}), 201
+                for p in products:
+                    if p["id"] == product_id and product_data["quantity"] >= quantity:
+                        if p["quantity"] > quantity:
+                            p["quantity"] -= quantity
+                            return jsonify({"message": "Product quantity has been updated"}), 201
+                        else:
+                            products.remove(p)
+                            return jsonify({"message": "Product has been removed from the cart"}), 201
+            else:
+                return jsonify({"message": "Product not found in the cart"}), 404
         else:
-            return jsonify({"message": "Product not found in the cart"}), 404
-    else:
-        return jsonify({"message": "User cart not found"}), 404
+            return jsonify({"message": "User cart not found"}), 404
 
 
 if __name__ == '__main__':
