@@ -82,10 +82,28 @@ def add_product_to_cart(user_id, product_id):
         for p in user_cart["products"]:
             if p["id"] == product_id:
                 p["quantity"] += quantity
+                request_data = {
+                    "flag": "add",
+                    "id": product_id,
+                    "quantity": quantity
+                }
+                requests.post(f"{PRODUCT_SERVICE_URL}?", json=request_data)
                 return jsonify({"message": "Product quantity has been updated"}), 200
         
+        request_data = {
+            "flag": "add",
+            "id": product_id,
+            "quantity": quantity
+        }
+        requests.post(f"{PRODUCT_SERVICE_URL}?", json=request_data)
         user_cart["products"].append({"id": product_id, "quantity": quantity})
     else:
+        request_data = {
+            "flag": "add",
+            "id": product_id,
+            "quantity": quantity
+        }
+        requests.post(f"{PRODUCT_SERVICE_URL}?", json=request_data)
         user_carts.append({
             "user_id": user_id,
             "products": [{"id": product_id, "quantity": quantity}]
@@ -97,7 +115,6 @@ def add_product_to_cart(user_id, product_id):
         "quantity": quantity
     }
     requests.post(f"{PRODUCT_SERVICE_URL}?", json=request_data)
-    
     return jsonify({"message": "Product has been added to the cart"}), 201
 
 
